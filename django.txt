@@ -1,0 +1,223 @@
+Создание django проекта
+django-admin startproject namesite
+Пакет конфигурации:
+settings.py - модуль с настройками
+urls.py модуль с маршрутами уровня проекта
+wsgi.py - модуль, связывающий проект с веб-сервером.
+
+Для запуска отладочного веб-сервера необходимо перейти в папку проекта и запустить его командой
+manage.py runserver
+
+для создания веб-приложения необходимо запустить команду
+manage.py startapp nameapp
+
+Для регистрации созданного приложения в проекте нужно внести изменения в файле settings
+INSTALLED_APPS = [
+    ......
+    nameapp.apps.NameappConfig
+]
+
+Для работы с базами изменяем секцию DATABASES
+
+MIDDLEWARE - посредник django, предварительно обрабатывающий клиентские запросы (например в целях защиты)
+Контроллеры (Views) django - это код, который запускается в ответ на поступлнеие клиентского запроса. В контроллерах выполняются все действия по подготовке данных для вывода, так и обработка данных, поступивших от пользователя.
+
+При работе с контролерами в качестве вывода используется экземпляр класса HttpResponse('Что то на вывод'), тоже и применяется на входе в качестве обязательного параметра под названием request:
+from django.http import HttpResponse
+def index(request):
+    return HttpResponse('Hellow world')
+
+Высокоуровневые классы-контроллеры
+наследуют класс
+from django.views.generic.edit import CreateView
+class BDCreateView(CreateView):
+    template_name = 'nameapp/create.html' - путь к шаблону, который используется ддля вывода
+    form_class = BDForm - форма ModelForm, связанная с моделью
+    success_url = 'nameapp' - перенаправление в случае успешного сохранения данных
+для success_url есть опять лайфхак из модуля
+from django.urls import reverse_lazy
+    success_url = reverse_lazy('index')
+
+    а вот тут мы формируем контекст шаблона. В нашем случае кидаем в шаблонизатор рубрики
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['rubrics'] = Rubric.objects.all()
+        return context
+
+create.html в части касающейся вывода формы будет выглядить следующим образом
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }} - вот этот метод и генерирует всю форму
+    <input type="submit" value="Добавить">
+</form>
+
+HttpResponseRedirect - используется когда требуется перенаправление
+revers() - применяется для именованных маршрутов при перенаправлении
+HttpResponseNotFound - применяется когда есть угроза того, что страница не существует
+StreamingHttpResponse - потоковый ответ (для больших страниц)
+FileResponse - передать клиенту файл
+JsonResponse - ну тут понятно
+
+Примеси - классы объеденяющие некий функционал для ускорения разработки, например TemplateView
+
+Маршруты
+Для определения маршрута к контроллеру index необходимо в папке проекта в модуле urls связать новый маршрут с контроллером
+urlpatterns = [
+    .....
+    path('nameapp', index) - имя страницы я думаю необязательно должно совпадать с именем приложения
+]
+Возможен и другой вариант, в корне приложения создать новый файл путей urls.py и по примеру корневого определить внутренни пути, отталкивающиеся по вложенности от пути самого приложения. Например новый urls в корне будет выглядить так
+urlpatterns = [
+    .....
+    path('', index) - тут адреса будут представляться в виде конкатинации из корневого, например 'nameapp' + '\newpage'
+]
+Тогда urls в корне проекта будет выглядить следующим образом
+from django.urls import path, include - include именно джанговский
+urlpatterns = [
+    .....
+    path('nameapp', include('nameapp.urls')) 
+]
+Параметрезованные пути
+urlpatterns = [
+    path('<int:id>', space_id, name='space_id') определяем имя маршрута
+]
+для передачи параметра в контроллер space_id нужно передавать параметр id
+для передачи именованных маршрутов в шаблонизатор используется деректива {% url 'space_id' id%} - тут мы объеденяем space_id с результируещим id
+в случе с CreateView путь будет записываться с вызывом метода as_view()
+path('add', BDCreateView.as_view(), name='add')
+
+для избежания коллизий адреса средует распологать в порядке от конечного к главному
+для избежания конфликтов пространства имен необходимо в файле urls каждого приложения перед списком маршрутов задать имя пространства черз переменную app_name
+
+Модели - описание сущности, хранимой в базе в виде класса
+Для создания класса-модели нужно следующее
+импортировать
+from django.db import models
+и создать класс наследуемый от абстрактной модели
+class BD(models.Model):
+    и тут уже объявляем поля
+    title = models.CharField(max_length=50) - вот тут настраивается всякая фигня по базе данных, единственное надо разобраться какие параметры вообще есть
+ВАЖНО: если первичный ключ не задан явно, django создаст его сам!
+параметры полей и моделей
+для добавления псевданима к полю, при его создании передаем параметр verbose_name='Псевдоним'
+для преднастроек модели в самой модели создаем вложенный класс Meta
+class Meta:
+    verbose_name_plural = 'В родительном падеже'
+    verbose_name = 'в именительном падеже'
+    ordering = ['-published'] - задаем правила сортировки
+для изменения представления модели в админке в файле admin приложения создаем сопостовимый с моделью класс-представление
+class BDAdmin(admin.ModelAdmin):
+    list_display = ('title',...) последовательность имен полей, которые должны выводится в списке записей
+    list_display_links = ('title',...) - последовательность имен полей в виде гиперссылок для редактирования записей
+    search_fields = ('title',...) - последовательность имен полей, по которым будет фильтрация
+и все это дело регистриуем тут же
+admin.site.register(BD, BDAdmin)
+
+Связи моделей
+один ко многим
+например создадим модель Rubric
+class Rubric(models.Model):
+    name = models.CharField(max_length=20, db_index=True)
+
+    def __str__(self):
+        return self.name - вывод в качестве строкового представления
+
+и добавим в BD внешний ключ
+rubric = models.ForeignKey('Rubric', null=True, on_delete=models.PROTECT)
+on_delete=models.PROTECT - запрещат каскадное удаление
+
+один к одному
+Например свяжем новою модель с бдж User
+class AdvUser(models.Model):
+    is_activated = models.BooleanField(default=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+
+
+
+
+Миграции - предназначены для посроения баз данных на основе сформированых моделей. Запускается когда сервер остановлен командой
+manage.py makemigrations nameapp
+будет создан файл сгенерированой миграции типа 0001_intial.py
+для просмотра SQL кода миграция нужно запустить команду
+manage.py sqlmigrate nameapp 0001
+для создания всех миграций команда
+manage.py migrate
+manage.py showmigrations - список миграций
+manage.py migrate nameapp zero - отмена всех миграций
+
+Консоль django
+manage.py shell
+
+Работа с моделями
+Для создания записи в базе необходимо передать именованные параметры в конструктор ранее созданой модели, придворительно ее импортировав
+b1 = BD(title='Title') но данный вызов еще не заносит модель в базу, для сохранения в базе вызываем
+b1.save()
+b1.pk - значение ключевого поля для настоящей записи.
+Я так понимаю что подобное управление всеравно работает через сам класс
+Аналогично обращаемся к любому полю
+b1.title
+Можно их так же переопределять
+либо
+BD.objects.create(title='DSadsad')
+Для получения всех записей в модели используем
+BD.objects.all()
+Для получения отсортированных записей используем
+BD.objects.order_by('title')
+Для получения фильтрованных записей используем
+BD.objects.filter(title='DSadsad')
+Для получения записи по ключу
+b = BD.objects.get(pk=1)
+Для удаления записи используем
+b.delete
+Так же в BD.objects.order_by('title') можно передавать параметры, например '-published' - по убыванию
+для вывода на вьюху можно импользовать следующий прием
+s = 'Список из базы данных \r\n\r\n'
+for item in BD.objects.order_by(-published):
+    s += item.title + '\r\n'
+return HttpResponse(s, content_type='text/plain', charset='utf-8')
+content_type='text/plain', charset='utf-8' - обычный текст с кодировкой utf-8
+
+Шаблоны
+Для создания папки шаблонов в папке приложения создается каталог templates и в нем каталог с названием приложения nameapp
+И создаем html шаблон по аналогу с jinja
+Для того что бы непосредственно подгрузить шаблон используем
+from django.template import loader
+template = loader.get_template('nameapp/index.html')
+для передачи в шаблон используем контекст
+context = {'BD', BD}
+return HttpResponse(template.render(context, request))
+Это сложный метод. Есть проще, с использованием функции-сокращения
+from django.shortcuts import render
+return render(request, 'nameapp/index.html', {'BD': BD})
+
+Административный веб сайт
+подсистема разграничения доступа django.contrib.auth
+Работу админки обеспечивает django.contrib.admin
+для достпа необходимо наличие суперпользователя
+создается командой 
+manage.py createsuperuser
+
+Настройка проекта для русского языка выполняется в файле settings проекта в секции LANGUAGE_CODE
+
+Для регистрации приложения, а равно и модели, в файле admin приложения регистриуем модель
+from django.contrib import admin
+admin.site.register(BD)
+
+
+ВЕБ Формы
+Django может генерировать веб-формы на основе моделей(по мне так читерство) и храниться в файле forms.py (хотя я думаю не обязательно)
+делается это при помощи пакета
+from django.forms import ModelForm
+и далее таким образом
+class BDForm(ModelForm):
+    class Meta:
+        model = BD
+        fields = ('title',...)
+
+Используя фабрики классов через функцию modelform_factory()
+
+СТИЛИ
+Это статические файлы и хранятся они в каталоге static 
+Для подключения стиля к страницы нужно в начале html файла дать команду на загрузку статических рессурсов
+{% load static %} 
+<link rel="stylesheet" type="text/css" href="{% static 'nameapp/style.css' %}"

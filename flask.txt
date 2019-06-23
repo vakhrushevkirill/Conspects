@@ -1,0 +1,45 @@
+устанавливается через pip
+далее
+from flask import Flask
+Создание корня приложения
+app = flask(__name__)
+
+запуск 
+app.run() 
+С режимом отладки 
+app.run(debug=True)
+
+с помощью декоратора определяем отображание страниц
+@app.route('/')
+
+Для создания шаблонов создаем зарезервированную папку templates
+Для подключения шаблонов импортируем 
+from flask import render_template
+и вызываем передавая шаблон в render_template
+а так же переменные через именованные аргументы
+
+Наследование шаблонов
+В базовом шаблоне определяем блоки куда что будем вставлять
+{% block name %}
+{% endblock %}
+
+В файле который будет расширять базовый пишим
+{% extends 'base.html' %}
+{% block name %}
+тут свое
+{% endblock %}
+
+Blueprint - кусок отдельного, изолированного функционала
+для его создания импортируем 
+from flask import Blueprint
+
+posts = Blueprint('posts', __name__, template_folder = 'templates')
+
+далее регистрируем его в модуле app
+from posts.blueprint import posts
+app.register_blueprint(posts, url_prefix='\')
+
+в модуле blueprint создаем
+@posts.route('/')
+    return render_template('posts/index.html')
+

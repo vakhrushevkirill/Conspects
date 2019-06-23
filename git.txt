@@ -1,0 +1,127 @@
+Установка Git
+sudo apt-get install git
+gitk gui версия
+
+Проверка версии
+git --version
+
+Глобальная конфигурация git
+git config --global user.name "Vakhrushev Kirill"
+git config --global user.email "vakhrushev.kirill93@yandex.ru"
+
+Инициализация git репозитория
+git init
+
+Добавление файла на коммит кандидат
+git add test.py
+git add *
+git add . добавление всех файлов
+
+Создание коммита
+git commit -m 'First Commit' добавление коментария
+
+git status - состояние репозитория
+
+Настройка файла, в котором отмечаются неотслеживаемые файлы - .gitignore
+Например
+.gitignore
+main.py - он отслеживаться не будет
+
+История изменений
+git diff 
+
+История коммитов
+git log
+
+История в одну строку
+git log --pretty=oneline 
+
+Установка количества выводов
+git log --max-count=3
+
+Вывести все коммиты
+git log --all
+
+Вывести коммиты конкретного автора
+git log --author = 'User Name'
+
+Откат к коммиту
+git checkout hash
+Возврат к мастер ветке
+git checkout master 
+
+Отмена индекса файла добавленного git add
+git reset HEAD test.txt
+git checkout test.txt
+
+Отмена коммита
+git revert HEAD
+git revert HEAD  --no-edit
+
+Git ветки
+Вывести ветки
+git branch 
+
+Создание новой ветки 
+git checkout -b newbranch
+
+Ветки создаются в виде дерева из корня текущей вершины
+
+Переходы между ветками
+git checkout master
+git checkout newbranch
+
+Слияние веток с master
+git merge newbranch
+
+
+Слияние веток с master в линию комитов, уничтожая комиты слитой ветки
+git rebase newbranch
+Если после rebase
+git merge --no--ff newbranch сохранит историю
+
+
+wq - при сохранении коментария
+
+добавление комита в master без сохранения истории коммитов
+git rebase newbranch 
+
+Удаленый репозиторий
+Клонирование удаленого репозитория
+git clone href
+
+Загрузка на удаленный репозиторий
+git remote add origin href
+git push -u origin master
+
+git push origin newbranch
+
+Подтягивание изменений
+git pull origin newbranch
+git pull --rebase origin newbranch
+
+Отложение изменений перед загрузкой
+git stash
+
+Вытащить отложенные изменения
+git stash pop
+
+Список отложенных изменений
+git stash list
+
+Последнее изменение в отложенных
+git stash show
+
+Накатывание изменений из отложенных
+git stash apply
+
+Удаляет из корзины без применения
+get stash drop
+
+Очистка корзины
+git stash clear
+
+Список удаленных репозиториев
+git remote
+
+git remote -v

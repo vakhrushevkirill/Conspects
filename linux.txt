@@ -1,0 +1,16 @@
+tar xvf prg-2.00.tar распаковка архива
+dpkg -i -R /nfs/pkgs/ubuntu-builds/ - установка всех deb пакетов в каталоге
+
+
+Работа с архивами
+tar -cvzf filename.tar.gz dir_name создание архива gzip
+
+распаковка архива
+tar -xvf filename.tar.bz2
+tar -xvf filename.tar.bz2 -C /path/to/folder
+
+Просмотр содержимого архива без распаковки
+tar -tf filename.tar.gz
+
+df - какие диски подключены к файловой системой
+df -h задает единицу измерения

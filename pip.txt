@@ -1,0 +1,8 @@
+pip help - список команд
+pip list - список установленных пакетов
+pip list -o список доступных обновлений
+pip show name информация о пакете
+pip check список зависимостей
+pip freeze список текущих пакетов
+pip freeze > requirements.txt - список выгрузить в файл
+pip install -i 

@@ -1,0 +1,280 @@
+sudo apt-get install mysql-server - установка mysql сервера
+sudo apt-get install mysql-client - установка клиета
+
+Полное удаление mysql
+sudo apt-get remove --purge mysql-server mysql-client mysql-common
+sudo apt-get autoremove
+sudo apt-get autoclean
+
+
+Основные типы данных
+INT - числа
+VARCHAR - Текст
+DATE - дата
+
+SHOW databases; список баз
+CREATE DATABASE name_bd; Создать базу данных
+DROP DATABASE name_bd; Удалить базу данных
+USE name_bd; Выбрать базу данных для работы
+
+CREATE TABLE name_table (col1 INT, 
+                         col2 VARCHAR(30)); 
+Создать таблицу. Названия полей нужно указывать сразу
+
+DROP TABLE name_table; Удаление таблицы из бд
+DESC name_table; Информация о таблице
+
+Вставка данных в таблицу
+INSERT INTO name_table VALUES (1, 'petr');
+INSERT INTO name_table (col1, col2) VALUES (1, 'petr');
+
+Вывести инфу из таблицы
+SELECT * FROM name_table;
+SELECT col1, col2 FROM name_table;
+
+Вывести инфу с ограничениями
+SELECT col1, col2, FROM name_table
+WHERE col1 > 4;
+AND, OR ключивые слова И, ИЛИ
+
+Вывести все, где col1 оканчивается на ot
+SELECT col1, col2 FROM name_table
+WHERE col1 LIKE '%ot' 
+
+Вывести все col1 и col2 если col1 содержит (7, 8 ,9) 
+SELECT col1, col2 FROM name_table
+WHERE col1 IN (7, 8 ,9) 
+
+для col1 между 20 и 50
+SELECT col1, col2 FROM name_table
+WHERE col1 BETWEEN 20 AND 50;
+
+для col1 которые не находяся между 20 и 50
+SELECT col1, col2 FROM name_table
+WHERE NOT col1 BETWEEN 20 AND 50;
+
+Удалить все записи
+DELETE FROM name_table;
+
+Удалить все записи, где col2 > 70
+DELETE FROM name_table
+WHERE col2 > 70;
+
+Обновление записей
+UPDATE name_table
+SET col1 = 100
+WHERE col2 = 'root'
+
+Нормализованные таблицы
+Первичный ключ - должна содержать каждая таблица, уникально определяющая каждую строку
+
+Атомарность данных - минимальная еденица хранимой информации, определяющая эфективность ее использования
+Правила атомарности
+1) Столбец не может состоять из нескольких однотипных элементов
+2) таблица не может состоять из нескольких однотипных полей
+
+Создание таблицы с первичным ключем
+CREATE TABLE name_table (
+    id INT AUTO_INCREMENT, -- Автоматическое приращение при добавлении записей
+    name VARCHAR(30),
+    col1 INT NOT NULL, -- поле не может быть пустым
+    PRIMARY KEY(id)
+);
+
+Изменение таблиц
+Вставка нового поля в таблицы
+ALTER TABLE name_table
+ADD COLUMN id AUTO_INCREMENT FIRST, -- Поле добавится в левую часть таблицы, например AFTER name_column
+ADD PRIMARY KEY(id)
+
+Удалить столбец
+ALTER TABLE name_table
+DROP COLUMN col1
+
+Переименование таблицы
+ALTER TABLE name_table
+RENAME TO name_table_1
+
+Переименование поля и изменение формата храннимых данных
+ALTER TABLE name_table
+CHANGE COLUMN col1 col1_new VARCHAR(50) NOT NULL
+
+Изменение поля
+ALTER TABLE name_table
+MODIFY COLUMN col1 VARCHAR(30)
+
+Функции для строк
+UPPER - Вывести все записи в верхнем регистре
+LOWER - Вывести все записи в нижнем регистре
+SELECT UPPER(col1) FROM name_table;
+
+SUBSTRING_INDEX (поле, разделитель, 1 / -1) сплит функция где 1 возмет текст слева от разделителя, -1 справ
+UPDATE name_table
+SET
+col_2_split1 = SUBSTRING_INDEX(col1, ' ', 1),
+col_2_split2 = SUBSTRING_INDEX(col1, ' ', -1);
+
+RIGHT\LEFT (поле, кол-во символов) - возращает строку справ или слева
+
+RTRIM\LTRIM (поле) удалить лишние пробелы
+
+CASE
+Обновление записей по каскаду условий
+UPDATE name_table
+SET col1 = CASE
+WHEN col2 > 350 THEN 'Зашибись'
+WHEN col2 > 100 THEN 'Не плохо'
+WHEN col2 > 0 THEN 'Ну такое'
+ELSE 'Ну вообще ни как'
+END;
+
+Сортировка
+ORDER BY
+ORDER BY ... DESC - сортировка в обратном порядке
+SELECT col1,col2 FROM name_table ORDER BY col2, col1
+
+Функции для работы с числами 
+SUM(pole) выводит сумму по всему столбцу
+MIN\MAX
+COUNT(pole) кол-во записей
+AVG среднее арифмитическое
+
+SELECT col1, col2 FROM name_table
+WHERE col3 = (SELECT MAX(col3) FROM name_table);
+
+GROUP BY
+Вывести сгрупированные данные по col1
+SELECT col1,col2, SUM(col3) FROM name_table GROUP BY col1;
+
+SELECT DISTINCT col1 FROM name_table - вывод без дубликатов
+
+SELECT col1, col2, col3 FROM name_table ORDER BY col1 LIMIT 1 - вывести верхнюю запись
+
+SELECT col1, col2, col3 FROM name_table ORDER BY col1 LIMIT 0, 3- вывести первые три записи запись
+
+
+ФИШКИ
+Установка значений по умолчанию
+CREATE TABLE users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(30) NOT NULL,
+    last_name VARCHAR(30),
+    income INT DEFAULT 0, по умолчанию заполняет 0
+    email VARCHAR(30)
+);
+
+Псевдонимы
+SELECT fname as Имена FROM users;
+
+Связи таблиц
+Пользователи (user_id, name)
+Интересы (act_id, user_id, activity)
+CREATE TABLE activitys(
+    act_id INT AUTO_INCREMENT PRIMARY KEY,
+    activity VARCHAR (20) NOT NULL,
+    user_id INT,
+    FOREIGN KEY (user_id) REFERENCES users (user_id)
+    -- Указываем внешний ключ, ссылающийся на другую таблицу. Уникальным не является
+)
+
+Связи таблиц
+Один к одному
+CREATE TABLE persons (
+    person_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(20)
+)
+CREATE TABLE locals (
+    person_local_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(20)
+    FOREIGN KEY (person_local_id) REFERENCES persons (person_id)
+)
+Один ко многим
+CREATE TABLE persons (
+    person_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(20),
+    job_id INT
+)
+CREATE TABLE jobs (
+    job_id INT AUTO_INCREMENT PRIMARY KEY,
+    name_job VARCHAR(20)
+)
+ALTER TABLE users
+ADD FOREIGN KEY (job_id) REFERENCES jobs (job_id);
+
+Многие ко многим
+CREATE TABLE persons (
+    person_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(20)
+)
+CREATE TABLE classes (
+    class_id INT AUTO_INCREMENT PRIMARY KEY,
+    name_class VARCHAR(5)
+)
+
+CREATE TABLE persons_classes (
+    person_id INT NOT NULL,
+    class_id INT NOT NULL,
+    PRIMARY KEY (person_id, class_id),
+    FOREIGN KEY (person_id) REFERENCES persons (person_id),
+    FOREIGN KEY (class_id) REFERENCES classes (class_id)
+)
+
+
+Соеденения
+Пользователи (user_id, name)
+Интересы (act_id, user_id, activity)
+CREATE TABLE activitys(
+    act_id INT AUTO_INCREMENT PRIMARY KEY,
+    activity VARCHAR (20) NOT NULL,
+    user_id INT,
+    FOREIGN KEY (user_id) REFERENCES users (user_id)
+    -- Указываем внешний ключ, ссылающийся на другую таблицу. Уникальным не является
+)
+
+Перекресное соедененение
+SELECT u.name, a.activity FROM
+users u CROSS JOIN activitys a;
+
+Естественное соедененение
+SELECT u.name, a.activity FROM
+users u NATURAL JOIN activitys a;
+
+Внутренее соедененение
+SELECT u.name, a.activity FROM
+users u INNER JOIN activitys a
+ON u.user_id = a.user_id;
+
+Внешнее соедененение
+SELECT u.name, a.activity FROM
+users u LEFT JOIN activitys a
+ON u.user_id = a.user_id;
+
+SELECT u.name, a.activity FROM
+users u RIGHT JOIN activitys a
+ON u.user_id = a.user_id;
+
+ON u.user_id = a.user_id=USING(user_id)
+
+сравнение с NULL записывается как IS NULL
+
+
+подзапросы
+INSERT INTO activitys VALUES (
+    NULL,
+    (
+        SELECT user_id FROM users
+        WHERE name = 'Peta'
+    ),
+    'SQL'
+);
+
+Нормальные формы
+1) Все данные атомарны
+2) Отсутсвие частичных функциональных зависимостей
+3) Отсутсвие транзитивных функциональных зависимостей
+
+Предсталения
+CREATE VIEW view1 AS
+SELECT * FROM name_table
+
+SELECT col1 From view1

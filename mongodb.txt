@@ -1,0 +1,194 @@
+Для выяснения порта по которому работаем(а нифига, так запускаем сам сервер получается)
+mongod
+
+Запуск среды
+mongo --host localhost:port
+
+Подключение к бд а так же создание
+use newdatabase 
+
+здесь и далее db я думаю является указателем на объект базы данных, в моем случае db=newdatabase
+Создание коллекции, аля таблица в реалиционной бд
+db.createCollection("users")
+Удаление
+db.users.drop()
+
+Создание записи
+_id добавляется автоматом
+Создасться именно одна запись
+db.users.insertOne(
+    {
+        "name": "Jone",
+        "email": "test@yandex.ru",
+        "birthday": new Date('1996-11-27'), 
+        "age": 29
+    })
+
+db.users.insertMany(
+    [
+        {
+            "name": "Jone",
+            "email": "test@yandex.ru",
+            "birthday": new Date('1996-11-27'), 
+            "age": 33
+        },
+        {
+            "name": "Vasy",
+            "email": "test@yandex.ru",
+            "birthday": new Date('1996-11-27'), 
+            "age": 22
+        }
+    ])
+
+
+db.users.find() - вывести все 
+db.users.find().limit(2) - вывести первые две записи
+db.users.find({},{_id:0}) - вывести все записи без _id
+db.users.find({},{_id:0}).sort({name: 1}) - сортировка по возрастанию (-1 по убыванию)
+db.users.find({},{_id:0}).sort({name: 1, email: 1}) - сортировка по возрастанию (-1 по убыванию)
+
+фильтры
+db.users.find({name: "Jone"},{_id:0}) - вывод всех записей где name=Jone
+
+db.users.find({$or: [{name: "Jone"}, {email: "test@yandex.ru"}]},{_id:0}) - вывод всех записей где name=Jone или email=test@yandex.ru
+
+db.users.find({$or: [{age: {$lt: 38}}, {email: "test@yandex.ru"}]},{_id:0}) - вывод всех записей где age<38 или email=test@yandex.ru 
+gt для нотации >
+gte для нотации >=
+eq для нотации =
+ne для нотации !=
+
+db.users.find({name:{$in: ['Jack', 'Jone']}}, {_id: 0}) 
+- вывод всех записей, где name содаержит Jack или Jone
+nin - не соответствует
+
+db.users.find({child: {$exists: true}}, {_id: 0}) 
+- выведет всех у кого есть поле child
+
+db.users.find({favColors: {$size: 2}}, {_id: 0}) 
+- выведет все объекты, у которых есть массив favColors и его размер=2
+
+db.users.find({"favColors.1":"Red"}, {_id: 0}) 
+- выведет все объекты у которых favColors[1]="Red"
+
+db.users.find({favNumber: {$elemMatch: {$lte: 3}}}, {_id: 0}) 
+- выведет все объекты, у которых favNumber содержит элементы которые <=3
+
+Обновление
+db.users.updateOne(
+    {
+        age:22
+    },
+    {
+        $set: {age: 25}
+    }
+)
+обновит первый встреченный объект у которого age=22 на age=25
+
+db.users.updateMany(
+    {
+        age:22
+    },
+    {
+        $set: 
+        {
+            age: 25,
+            name: "User"    
+        }
+    }
+)
+обновит все объекты у которых age=22 на age=25 и сделает name=User
+db.users.replaceOne(
+    {
+        age: 23
+    },
+    {
+        name: "New User",
+        password: "sdadasdas"
+    }
+)
+
+тут обнавлние происходит через создание нового объекта
+
+db.users.deleteMany(
+    {
+        age: 
+        {
+            $gt:22
+        }, 
+        age:
+        {
+            $lt: 38
+        }
+    }
+)
+
+удалит все объекты, где 22<age<38
+
+Объедение запросов
+db.users.bulkWrite(
+    [
+        insertOne:{
+            'document': {
+                name: 'Mike',
+                age: 45
+            }
+        },
+        deleteOne:{
+            filter: {age: 20}
+        },
+        updateOne: {
+            filter: {name: "Mike"},
+            update: {
+                $set: {
+                    email: 'new_email@mail.ru
+                }
+            }
+        },
+        replaceOne: {
+            filter: {name: "Mike"},
+            replacement: {
+                name: "Bob",
+                age:45
+            }
+        }
+    ]
+)
+
+
+Поиск в индексе
+db.articles.createIndex({
+    title: "text",
+    anons: "text"
+})
+Создание индекса по полям таблицы articles
+и для выборки используем
+db.articles.find({
+    $text: {
+        $search: "Вау!"
+    }
+})
+тут будут выведены все объекты в полях title или anons которых будет содержаться текст "Вау!"
+
+db.articles.find({
+    $text: {
+        $search: "Вау! Свободу"
+    }
+})
+тут будут выведены все объекты в полях title или anons которых будет содержаться текст "Вау!" или "Свободу"
+
+db.articles.find({
+    $text: {
+        $search: "Вау! Свободу"
+    },
+    {score: {$meta: "textScore"}}   
+}).sort({score: {$meta: "textScore"}})
+Вычислит насколько вывод схож с запросом и отсортирует по этому результату
+
+db.users.count({age: 18}) количество записей, где age = 18
+db.users.distinct("email") = выведет уникальные email
+db.users.aggregate([
+    {$match: {name: "Mike"}},
+    {$group: {_id: "name", age: {$sum: "age"}}}
+])
+Объедение, группировка по фильтру с выводом суммы возраста
